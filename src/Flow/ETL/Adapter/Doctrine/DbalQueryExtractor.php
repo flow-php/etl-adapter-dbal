@@ -7,11 +7,13 @@ namespace Flow\ETL\Adapter\Doctrine;
 use function Flow\ETL\DSL\array_to_rows;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\{ArrayParameterType, Connection, ParameterType};
-use Flow\ETL\{Extractor, FlowContext};
+use Flow\ETL\{Extractor, FlowContext, Row\Schema};
 
 final class DbalQueryExtractor implements Extractor
 {
     private ParametersSet $parametersSet;
+
+    private ?Schema $schema = null;
 
     private array $types = [];
 
@@ -45,7 +47,7 @@ final class DbalQueryExtractor implements Extractor
     {
         foreach ($this->parametersSet->all() as $parameters) {
             foreach ($this->connection->fetchAllAssociative($this->query, $parameters, $this->types) as $row) {
-                $signal = yield array_to_rows($row, $context->entryFactory());
+                $signal = yield array_to_rows($row, $context->entryFactory(), [], $this->schema);
 
                 if ($signal === Extractor\Signal::STOP) {
                     return;
@@ -57,6 +59,13 @@ final class DbalQueryExtractor implements Extractor
     public function withParameters(ParametersSet $parametersSet) : self
     {
         $this->parametersSet = $parametersSet;
+
+        return $this;
+    }
+
+    public function withSchema(Schema $schema) : self
+    {
+        $this->schema = $schema;
 
         return $this;
     }

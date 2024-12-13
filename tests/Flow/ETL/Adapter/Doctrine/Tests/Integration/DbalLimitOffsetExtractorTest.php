@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Flow\ETL\Adapter\Doctrine\Tests\Integration;
 
 use function Flow\ETL\Adapter\Doctrine\{from_dbal_limit_offset, from_dbal_limit_offset_qb};
-use function Flow\ETL\DSL\df;
+use function Flow\ETL\DSL\{df, int_schema, map_schema, schema, str_schema, type_int, type_map, type_string};
 use Doctrine\DBAL\Schema\{Column, Table};
 use Doctrine\DBAL\Types\{Type, Types};
 use Flow\ETL\Adapter\Doctrine\Tests\IntegrationTestCase;
@@ -95,6 +95,86 @@ final class DbalLimitOffsetExtractorTest extends IntegrationTestCase
                 ['id' => 8, 'name' => 'name_8', 'description' => 'description_8'],
             ],
             $data->toArray()
+        );
+    }
+
+    public function test_extracting_entire_table_using_qb_with_schema() : void
+    {
+        $this->pgsqlDatabaseContext->createTable((new Table(
+            $table = 'flow_doctrine_bulk_test',
+            [
+                new Column('id', Type::getType(Types::INTEGER), ['notnull' => true]),
+                new Column('name', Type::getType(Types::STRING), ['notnull' => true, 'length' => 255]),
+                new Column('tags', Type::getType(Types::JSON), ['notnull' => true, 'length' => 255]),
+            ],
+        ))
+            ->setPrimaryKey(['id']));
+
+        for ($i = 1; $i <= 8; $i++) {
+            $this->pgsqlDatabaseContext->insert($table, ['id' => $i, 'name' => 'name_' . $i, 'tags' => '{"a": 1, "b": 2 }']);
+        }
+
+        $schema = (new Flow())
+            ->extract(
+                from_dbal_limit_offset_qb(
+                    $this->pgsqlDatabaseContext->connection(),
+                    $this->pgsqlDatabaseContext->connection()->createQueryBuilder()
+                        ->from($table)
+                        ->select('*')
+                        ->orderBy('id', 'ASC'),
+                    5
+                )->withSchema(schema(
+                    int_schema('id'),
+                    str_schema('name'),
+                    map_schema('tags', type_map(type_string(), type_int()))
+                ))
+            )
+            ->schema();
+
+        self::assertEquals(
+            [
+                [
+                    'ref' => 'id',
+                    'type' => [
+                        'type' => 'scalar',
+                        'scalar_type' => 'integer',
+                        'nullable' => false,
+                    ],
+                    'metadata' => [],
+                ],
+                [
+                    'ref' => 'name',
+                    'type' => [
+                        'type' => 'scalar',
+                        'scalar_type' => 'string',
+                        'nullable' => false,
+                    ],
+                    'metadata' => [],
+                ],
+                [
+                    'ref' => 'tags',
+                    'type' => [
+                        'type' => 'map',
+                        'key' => [
+                            'type' => [
+                                'type' => 'scalar',
+                                'scalar_type' => 'string',
+                                'nullable' => false,
+                            ],
+                        ],
+                        'value' => [
+                            'type' => [
+                                'type' => 'scalar',
+                                'scalar_type' => 'integer',
+                                'nullable' => false,
+                            ],
+                        ],
+                        'nullable' => false,
+                    ],
+                    'metadata' => [],
+                ],
+            ],
+            $schema->normalize()
         );
     }
 

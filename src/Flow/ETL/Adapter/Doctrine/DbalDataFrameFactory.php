@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Flow\ETL\Adapter\Doctrine;
 
+use function Flow\ETL\DSL\df;
 use Doctrine\DBAL\{Connection, DriverManager};
-use Flow\ETL\{DataFrame, DataFrameFactory, Flow, Rows};
+use Flow\ETL\{DataFrame, DataFrameFactory, Row\Schema, Rows};
 
 final class DbalDataFrameFactory implements DataFrameFactory
 {
@@ -15,6 +16,8 @@ final class DbalDataFrameFactory implements DataFrameFactory
      * @var array<QueryParameter>
      */
     private array $parameters;
+
+    private ?Schema $schema = null;
 
     /**
      * @param array<string, mixed> $connectionParams
@@ -51,8 +54,29 @@ final class DbalDataFrameFactory implements DataFrameFactory
             }
         }
 
-        /** @psalm-suppress InvalidArgument */
-        return (new Flow())->extract(\Flow\ETL\Adapter\Doctrine\dbal_from_query($this->connection(), $this->query, $parameters, $types));
+        $extractor = from_dbal_query($this->connection(), $this->query);
+
+        if ($this->schema) {
+            $extractor->withSchema($this->schema);
+        }
+
+        if (\count($parameters)) {
+            $extractor->withParameters(new ParametersSet($parameters));
+        }
+
+        if (\count($types)) {
+            /** @psalm-suppress InvalidArgument */
+            $extractor->withTypes($types);
+        }
+
+        return df()->read($extractor);
+    }
+
+    public function withSchema(Schema $schema) : self
+    {
+        $this->schema = $schema;
+
+        return $this;
     }
 
     private function connection() : Connection

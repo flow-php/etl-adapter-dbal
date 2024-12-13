@@ -88,7 +88,7 @@ function from_dbal_limit_offset_qb(
  * @param array<int|string, DbalArrayType|DbalParameterType|DbalType|int|string> $types
  */
 #[DocumentationDSL(module: Module::DOCTRINE, type: DSLType::EXTRACTOR)]
-function dbal_from_queries(
+function from_dbal_queries(
     Connection $connection,
     string $query,
     ?ParametersSet $parameters_set = null,
@@ -111,11 +111,27 @@ function dbal_from_queries(
 }
 
 /**
+ * @deprecated use from_dbal_queries() instead
+ *
+ * @param null|ParametersSet $parameters_set - each one parameters array will be evaluated as new query
+ * @param array<int|string, DbalArrayType|DbalParameterType|DbalType|int|string> $types
+ */
+#[DocumentationDSL(module: Module::DOCTRINE, type: DSLType::EXTRACTOR)]
+function dbal_from_queries(
+    Connection $connection,
+    string $query,
+    ?ParametersSet $parameters_set = null,
+    array $types = [],
+) : DbalQueryExtractor {
+    return from_dbal_queries($connection, $query, $parameters_set, $types);
+}
+
+/**
  * @param array<string, mixed>|list<mixed> $parameters - @deprecated use DbalQueryExtractor::withParameters() instead
  * @param array<int|string, DbalArrayType|DbalParameterType|DbalType|int|string> $types - @deprecated use DbalQueryExtractor::withTypes() instead
  */
 #[DocumentationDSL(module: Module::DOCTRINE, type: DSLType::EXTRACTOR)]
-function dbal_from_query(
+function from_dbal_query(
     Connection $connection,
     string $query,
     array $parameters = [],
@@ -127,6 +143,22 @@ function dbal_from_query(
         $parameters,
         $types,
     );
+}
+
+/**
+ * @deprecated use from_dbal_query() instead
+ *
+ * @param array<string, mixed>|list<mixed> $parameters - @deprecated use DbalQueryExtractor::withParameters() instead
+ * @param array<int|string, DbalArrayType|DbalParameterType|DbalType|int|string> $types - @deprecated use DbalQueryExtractor::withTypes() instead
+ */
+#[DocumentationDSL(module: Module::DOCTRINE, type: DSLType::EXTRACTOR)]
+function dbal_from_query(
+    Connection $connection,
+    string $query,
+    array $parameters = [],
+    array $types = [],
+) : DbalQueryExtractor {
+    return from_dbal_query($connection, $query, $parameters, $types);
 }
 
 /**
