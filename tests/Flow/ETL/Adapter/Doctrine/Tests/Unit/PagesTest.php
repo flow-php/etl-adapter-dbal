@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Flow\ETL\Adapter\Doctrine\Tests\Unit;
 
 use Flow\ETL\Adapter\Doctrine\Pages;
-use PHPUnit\Framework\TestCase;
+use Flow\ETL\Tests\FlowTestCase;
 
-final class PagesTest extends TestCase
+final class PagesTest extends FlowTestCase
 {
     public function test_total_even_pages() : void
     {

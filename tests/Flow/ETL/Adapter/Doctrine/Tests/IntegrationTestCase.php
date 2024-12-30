@@ -8,9 +8,9 @@ use Doctrine\DBAL\Logging\Middleware;
 use Doctrine\DBAL\Tools\DsnParser;
 use Doctrine\DBAL\{Configuration, DriverManager};
 use Flow\ETL\Adapter\Doctrine\Tests\Context\{DatabaseContext, InsertQueryCounter};
-use PHPUnit\Framework\TestCase;
+use Flow\ETL\Tests\FlowTestCase;
 
-abstract class IntegrationTestCase extends TestCase
+abstract class IntegrationTestCase extends FlowTestCase
 {
     protected DatabaseContext $pgsqlDatabaseContext;
 
